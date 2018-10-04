@@ -10,9 +10,11 @@ export class DbService {
 
   constructor(private http: Http) { }
 
-  public post(service_page: string, parameters: any = {}, options: any = {}): Observable<any> {
-    const url = `${this.apiRoot}${service_page}.php`
-    return (this.http.post(url, parameters, options))
+  public post(service_page: string, parameters: any = {}, options: any = {}, qs:string = ''): Observable<any> {
+    qs =  (qs) ? `?${qs}` : '' ;
+    const url = `${this.apiRoot}${service_page}.php${qs}`;
+
+    return (this.http.post(url, parameters, options));
   }
 
 }

@@ -1,14 +1,15 @@
-import { Component, OnInit} from '@angular/core';
+import { Component, OnInit, ViewChild} from '@angular/core';
 import {ErrorStateMatcher} from '@angular/material/core';
+import {MatAccordion} from "@angular/material";
 import { DbService } from './services/db.service';
 import {FormControl, FormGroupDirective, NgForm, Validators} from '@angular/forms';
 
 interface data {
-  id: number,
+  id: string,
   name: string,
   tel: string,
   email: string,
-  photo: ByteString,
+  photo: string,
   adress: string,
   obs: string,
 }
@@ -28,19 +29,34 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
 })
 export class AppComponent implements OnInit{
 
+  @ViewChild(MatAccordion) accordion: MatAccordion;
+
   public data: data;
   public editData: data;
+  public insertData: data;
   public loading = false;
   public letEdit = false;
+  public imgHost = 'http://localhost/EssentiaPharma/fotos/';
+  public letInsert = false;
+  public uploading = false;
+  public fileUploaded = false;
 
   emailFormControl = new FormControl('', [
     Validators.required,
     Validators.email,
   ]);
+  nameFormControl = new FormControl('', [
+    Validators.required,
+  ]);
+  photoFormControl = new FormControl('', [
+    Validators.required,
+  ]);
 
   matcher = new MyErrorStateMatcher();
 
-  constructor (private db: DbService) {}
+  constructor (private db: DbService) {
+
+  }
 
   load() {
     this.loading=true;
@@ -49,7 +65,6 @@ export class AppComponent implements OnInit{
       res => {
         this.loading=false;
         this.data = res.json()
-        // console.info(this.data)
       },
     )
   }
@@ -59,35 +74,56 @@ export class AppComponent implements OnInit{
     this.letEdit = true;
   }
 
-  saveEdit(lineData){
-    // console.info(lineData);
+  newClient(){
     this.loading=true;
-    this.data = null;
-    this.db.post('edit-cliente',lineData).subscribe(
+    this.insertData = null;
+    this.editData = null;
+    this.letInsert = false;
+    this.db.post('insert-cliente').subscribe(
       res => {
-        console.info(res)
-        this.load();
+        this.insertData = res.json()[0];
+        this.letInsert = true;
+        this.loading=false;
       },
     )
+  }
+
+  cancelEdit(lineData){
+    this.load();
+    this.letInsert = false;
+  }
+
+  saveEdit(lineData){
+      this.loading=true;
+      this.letInsert = false;
+      this.data = null;
+      this.db.post('edit-cliente',lineData).subscribe(
+        res => {
+          this.load();
+        },
+      )
+    // }
   }
 
   openFile(id){
     document.getElementById("photo"+id).click();
   }
 
-  fileSelected(event,id){
-    let file : File;
+  fileSelected(event,actualData){
+    this.uploading = true;
+    let file,reset : File;
     const fd = new FormData();
     file = event.target.files[0];
+    reset = void
 
     fd.append('image', file, file.name);
     fd.append('headers', 'Content-Type', 'multipart/form-data');
-
-    console.info(fd);
-
-    this.db.post('salvar-foto',fd).subscribe(
+    this.db.post('salvar-foto',fd,{},'id=' + actualData.id).subscribe(
       res => {
-        console.info(res);
+        const ext = '.' + file.name.split('.').pop();
+        actualData.photo = actualData.id + ext;
+        event.srcElement.value = '';
+        this.uploading = false;
       }
     );
   }
@@ -105,6 +141,13 @@ export class AppComponent implements OnInit{
         },
       )
     }
+  }
+
+  panelClosed(){
+    this.letEdit=false;
+    this.editData = null;
+    this.letInsert=false;
+    this.insertData=null;
   }
 
   ngOnInit(){

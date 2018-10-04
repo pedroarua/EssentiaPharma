@@ -6,21 +6,68 @@
 <div class="container">
   <mat-grid-list cols="12" rowHeight="100px">
     <mat-grid-tile colspan="2">
-      <button (click)="openDialog()" mat-raised-button color="primary"><mat-icon>add</mat-icon></button>
+      <button (click)="newClient()" mat-raised-button color="primary"><mat-icon>add</mat-icon></button>
     </mat-grid-tile>
     <mat-grid-tile colspan="10">
-      <mat-form-field class="fullWidth">
-        <input matInput placeholder="Filtro">
-      </mat-form-field>
+      
 
     </mat-grid-tile>
   </mat-grid-list>
   <mat-accordion>
-    <mat-expansion-panel class="basicInfo" *ngFor="let line of data">
+    <mat-expansion-panel class="basicInfo" (closed)="panelClosed()" expanded *ngIf="letInsert">
       <mat-expansion-panel-header  class="basicInfo">
         <mat-panel-title>
-          <button mat-button class="profile mat-elevation-z2" style="background-image:url('/assets/teste.jpg')">
-          </button>
+          <div class="profile mat-elevation-z2">
+            <img src="{{(insertData.photo) ? imgHost + insertData.photo : '/assets/default-avatar.png'}}" alt="">
+          </div>
+        </mat-panel-title>
+        <mat-panel-description>
+          <div class="info">
+            <span class="name">{{insertData.name}}</span>
+            <span class="tel">{{insertData.tel}}</span>
+            <span class="email">{{insertData.email}}</span>
+          </div>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <div class="divEdit">
+        <mat-form-field class="nameInput">
+          <input matInput placeholder="Nome" [formControl]="nameFormControl" [(ngModel)]="insertData.name">
+        </mat-form-field>
+
+        <mat-form-field class="telInput">
+          <input matInput placeholder="Telefone" [(ngModel)]="insertData.tel">
+        </mat-form-field>
+
+        <mat-form-field class="input emailInput">
+          <input matInput placeholder="E-mail" [formControl]="emailFormControl" [(ngModel)]="insertData.email">
+          <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">
+            Por favor, coloque um e-mail válido
+          </mat-error>
+          <mat-error *ngIf="emailFormControl.hasError('required')">
+            O e-mail é obrigatório
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="emailInput">
+          <input matInput placeholder="Foto">
+          <button mat-raised-button color="primary" [disabled]="uploading" (click)="openFile(insertData.id)">Selecione uma foto</button>
+    
+          <input id="photo{{insertData.id}}" hidden (change)="fileSelected($event,insertData)" type="file" />
+        </mat-form-field>
+
+        <mat-form-field class="obsInput">
+          <textarea rows="10" matInput placeholder="Observações" [(ngModel)]="insertData.obs"></textarea>
+        </mat-form-field>
+        <button mat-button color="accent" (click)="cancelEdit(insertData)">Cancelar</button>
+        <button mat-raised-button color="primary" [disabled]="uploading" (click)="saveEdit(insertData)">Salvar</button>
+      </div>
+    </mat-expansion-panel>
+    <mat-expansion-panel class="basicInfo" (closed)="panelClosed()" *ngFor="let line of data">
+      <mat-expansion-panel-header  class="basicInfo">
+        <mat-panel-title>
+          <div class="profile mat-elevation-z2">
+            <img src="{{(line.photo) ? imgHost + line.photo : '/assets/default-avatar.png'}}" alt="">
+          </div>
         </mat-panel-title>
         <mat-panel-description>
           <div class="info">
@@ -61,15 +108,15 @@
 
         <mat-form-field class="emailInput">
           <input matInput placeholder="Foto">
-          <button mat-raised-button color="primary" (click)="openFile(editData.id)">Selecione uma foto</button>
-          <input id="photo{{editData.id}}" (change)="fileSelected($event,editData.id)" type="file" />
+          <button mat-raised-button color="primary" [disabled]="uploading" (click)="openFile(editData.id)">Alterar foto</button>
+          <input id="photo{{editData.id}}" hidden (change)="fileSelected($event,editData)" type="file" />
         </mat-form-field>
 
         <mat-form-field class="obsInput">
           <textarea rows="10" matInput placeholder="Observações" [(ngModel)]="editData.obs"></textarea>
         </mat-form-field>
-        <button mat-button color="accent">Cancelar</button>
-        <button mat-raised-button color="primary" (click)="saveEdit(editData)">Salvar</button>
+        <button mat-button color="accent" (click)="cancelEdit(editData)">Cancelar</button>
+        <button mat-raised-button color="primary" [disabled]="uploading" (click)="saveEdit(editData)">Salvar</button>
       </div>
     </mat-expansion-panel>
   </mat-accordion>
